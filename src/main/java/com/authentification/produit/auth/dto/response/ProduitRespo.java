@@ -4,20 +4,14 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-
-import java.util.List;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class CategorieRespo {
+public class ProduitRespo {
 
     private Long id;
-
-
-    private String nom;
-
-
-    private String description;
-
-    private List<ProduitRespo> produits;
+    private String designation;
+    private Double prix;
+    private Integer quantite;
+    private String categorieName;
 }

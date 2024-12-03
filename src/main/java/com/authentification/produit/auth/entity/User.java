@@ -23,6 +23,6 @@ public class User {
     @Size(min = 6, max = 100)
     private String password;
     private Boolean active =true;
-    @ManyToMany(fetch = FetchType.EAGER)
+    @ManyToMany(fetch = FetchType.EAGER, cascade = CascadeType.PERSIST)
     private Collection<Role> roles;
 }
