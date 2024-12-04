@@ -101,7 +101,7 @@ public class UserService implements UserDetailsService {
     }
 
     public UserResponse authenticate(String login, String password) {
-        log.debug("Attempting authentication for user: {}", login);
+        log.info("Attempting authentication for user: {}", login);
         User user = userRepo.findByLogin(login)
                 .orElseThrow(() -> new ValidationException("Login ou mot de passe incorrect"));
 
