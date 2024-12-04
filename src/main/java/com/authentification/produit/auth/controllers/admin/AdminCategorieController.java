@@ -27,7 +27,7 @@ public class AdminCategorieController {
         return ResponseEntity.ok(categorieService.creer(request));
     }
 
-    @PostMapping("/add-list")
+    @PostMapping("/add")
 
     public ResponseEntity<List<CategorieRespo>> creerPlusieurs(
             @Valid @RequestBody List<CategorieRequest> requests) {
