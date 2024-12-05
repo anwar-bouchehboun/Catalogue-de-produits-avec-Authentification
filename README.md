@@ -145,7 +145,9 @@
 # Commande pour exécuter l'application
 
 ```
-CMD ["java", "-jar", "gestion-produit.jar"]
+     java -jar target/auth_ja.jar
+
+CMD ["java", "-jar", "auth_ja.jar"]
 ```
 
 Jenkins
@@ -174,7 +176,7 @@ Jenkins
 - Via Docker :
 
 ```
- docker run -p 8080:8080 gestion-produit
+ docker run -p 8080:8080 auth
 ```
 
 Via Spring Boot :
@@ -191,3 +193,10 @@ mvn spring-boot:run
 
 - La documentation des API est disponible via Swagger à l'URL suivante :
   Swagger API Documentation
+
+### Build et déploiement
+
+```
+  mvn clean package
+  mvn clean install
+```
