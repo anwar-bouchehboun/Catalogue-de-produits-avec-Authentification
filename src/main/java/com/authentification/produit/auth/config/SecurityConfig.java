@@ -7,6 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -42,6 +43,14 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 )
                 .passwordEncoder(passwordEncoder())
                 .rolePrefix("ROLE_");
+
+
+      /*  auth.inMemoryAuthentication()
+                .withUser("admin").password(passwordEncoder().encode("123456")).roles("ADMIN")
+                .and()
+                .withUser("user").password(passwordEncoder().encode("123456")).roles("USER");
+                */
+
     }
 
     @Override
@@ -50,6 +59,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
             .csrf().disable()
             .cors().and()
             .sessionManagement()
+                .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
             .maximumSessions(1)
             .and()
             .and()
@@ -62,32 +72,9 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
             .and()
             .httpBasic()
             .and()
-            .formLogin()
-            .failureUrl("/api/auth/login")
-                .successHandler((request, response, authentication) -> {
-                    log.info("Authentification réussie pour : {}", authentication.getName());
-                    log.info("Rôles : {}", authentication.getAuthorities());
-                    response.setContentType("application/json");
-                    response.getWriter().write("{\"status\":\"success\",\"sessionId\":\"" + request.getSession().getId() + "\"}");
-                })
-                .failureHandler((request, response, exception) -> {
-                    log.error("Échec d'authentification : {}", exception.getMessage());
-                    response.setStatus(401);
-                    response.getWriter().write("{\"error\":\"Authentification échouée\"}");
-                })
+                .formLogin().disable()
+                .httpBasic()
                   .and()
-            .logout()
-                .logoutUrl("/api/auth/logout")
-                .clearAuthentication(true)
-                .invalidateHttpSession(true)
-                .deleteCookies("JSESSIONID")
-                .logoutSuccessHandler((request, response, authentication) -> {
-                    response.setContentType("application/json;charset=UTF-8");
-                    response.setStatus(HttpServletResponse.SC_OK);
-                    response.getWriter().write("{\"message\":\"Déconnexion réussie\"}");
-                    log.info("Utilisateur déconnecté avec succès");
-                })
-                .and()  
                 .headers().frameOptions().sameOrigin() ;
     }
 
@@ -107,6 +94,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         source.registerCorsConfiguration("/**", configuration);
         return source;
     }
+
 
 
 }

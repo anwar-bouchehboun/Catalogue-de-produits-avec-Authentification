@@ -26,7 +26,7 @@ public class AdminProduitController {
         return ResponseEntity.ok(produitService.creer(request));
     }
 
-    @PostMapping("/add-list")
+    @PostMapping("/add")
     public ResponseEntity<List<ProduitRespo>> creerPlusieurs(@Valid @RequestBody List<ProduitRequest> requests) {
         return ResponseEntity.ok(produitService.creerPlusieurs(requests));
     }

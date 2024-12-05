@@ -17,6 +17,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -58,25 +59,31 @@ public class UserService implements UserDetailsService {
     }
 
     public List<UserResponse> listUsers() {
+        String currentUsername = SecurityContextHolder.getContext().getAuthentication().getName();
+        
         return userRepo.findAll().stream()
+                .filter(user -> !user.getLogin().equals(currentUsername))  
                 .map(userMapper::toDto)
                 .collect(Collectors.toList());
     }
 
+    @Transactional
     public void updateUserRoles(Long userId, List<String> roleNames) {
         User user = userRepo.findById(userId)
                 .orElseThrow(() -> new NotFoundExceptionHndler("Utilisateur non trouvé"));
 
         List<Role> roles = roleNames.stream()
-                .map(name -> {
-                    Role role = new Role();
-                    role.setName(name);
-                    return role;
-                })
+                .map(roleName -> roleRepo.findByName(roleName)
+                        .orElseGet(() -> {
+                            Role newRole = new Role();
+                            newRole.setName(roleName);
+                            return roleRepo.save(newRole);
+                        }))
                 .collect(Collectors.toList());
 
         user.setRoles(roles);
         userRepo.save(user);
+        log.info("Rôles mis à jour pour l'utilisateur {}: {}", userId, roleNames);
     }
 
     @Override
