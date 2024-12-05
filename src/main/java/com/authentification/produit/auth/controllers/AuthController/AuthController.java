@@ -3,6 +3,7 @@ package com.authentification.produit.auth.controllers.AuthController;
 import com.authentification.produit.auth.dto.request.UserRequest;
 import com.authentification.produit.auth.dto.response.UserResponse;
 import com.authentification.produit.auth.services.UserService;
+import com.authentification.produit.auth.utils.ReponseMessage;
 import com.authentification.produit.auth.validation.ValidationException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -79,10 +80,10 @@ public class AuthController {
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<String> logout() {
+    public ResponseEntity<Map<String, Object>> logout() {
 
         SecurityContextHolder.clearContext();
-        return new ResponseEntity<>("Logout successful", HttpStatus.OK);
+    return ResponseEntity.ok(ReponseMessage.success("Déconnexion réussie"));
 
     }
 
