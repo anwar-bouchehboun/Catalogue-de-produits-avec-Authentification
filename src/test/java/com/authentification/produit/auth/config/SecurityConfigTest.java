@@ -27,7 +27,7 @@ public class SecurityConfigTest {
     @WithMockUser(roles = "ADMIN")
     public void testAdminEndpointsWithAdminRole() throws Exception {
         mockMvc = MockMvcBuilders.webAppContextSetup(context).apply(springSecurity()).build();
-
+//check Admin
         mockMvc.perform(get("/api/admin/users"))
                 .andExpect(status().isOk());
     }
@@ -36,7 +36,7 @@ public class SecurityConfigTest {
     @WithMockUser(roles = "USER")
     public void testAdminEndpointsWithUserRole() throws Exception {
         mockMvc = MockMvcBuilders.webAppContextSetup(context).apply(springSecurity()).build();
-
+//check User
         mockMvc.perform(post("/api/admin/categories/add"))
                 .andExpect(status().isForbidden());
     }
@@ -45,7 +45,7 @@ public class SecurityConfigTest {
     @WithMockUser(roles = "USER")
     public void testUserEndpointsWithUserRole() throws Exception {
         mockMvc = MockMvcBuilders.webAppContextSetup(context).apply(springSecurity()).build();
-
+//check User
         mockMvc.perform(get("/api/user/categories"))
                 .andExpect(status().isOk());
     }
