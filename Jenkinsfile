@@ -1,18 +1,17 @@
 pipeline {
     agent any
     
-    environment {
-        GITHUB_CREDS = credentials('GITHUB_CREDENTIALS')
+    tools {
+        jdk 'JDK-17'
+        maven 'Maven-3.9.6'
     }
     
     stages {
         stage('Vérification des outils') {
             steps {
                 sh '''
-                    which git
-                    git --version
-                    node --version
-                    npm --version
+                    java -version
+                    mvn -version
                 '''
             }
         }
@@ -25,40 +24,31 @@ pipeline {
             }
         }
         
-        stage('Installation des dépendances') {
+        stage('Clean') {
             steps {
-                sh 'npm install'
+                sh 'mvn clean'
             }
         }
         
         stage('Tests') {
             steps {
-                sh 'npm test || echo "Pas de tests configurés"'
+                sh 'mvn test'
+            }
+            post {
+                always {
+                    junit '**/target/surefire-reports/*.xml'
+                }
             }
         }
         
         stage('Build') {
             steps {
-                sh 'npm run build || echo "Pas de build nécessaire"'
+                sh 'mvn package -DskipTests'
             }
-        }
-        
-        stage('Configuration Git') {
-            steps {
-                sh '''
-                    git config --global user.email "anouar.ab95@gmail.com"
-                    git config --global user.name "anwar-bouchehboun"
-                '''
-            }
-        }
-        
-        stage('Push') {
-            steps {
-                sh '''
-                    git add .
-                    git commit -m "Build et déploiement depuis Jenkins" || echo "Pas de changements à commiter"
-                    git push https://${GITHUB_CREDS_USR}:${GITHUB_CREDS_PSW}@github.com/anwar-bouchehboun/Catalogue-de-produits-avec-Authentification.git master
-                '''
+            post {
+                success {
+                    archiveArtifacts artifacts: '**/target/*.jar', fingerprint: true
+                }
             }
         }
     }
