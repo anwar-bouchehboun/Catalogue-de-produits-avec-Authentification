@@ -97,7 +97,7 @@ pipeline {
                         echo "Démarrage du nouveau conteneur"
                         docker run -d \
                             --name ${APP_NAME} \
-                            -p ${APP_PORT}:8080 \
+                            -p ${APP_PORT}:8086 \
                             -e SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE} \
                             ${APP_NAME}:latest
                     '''
