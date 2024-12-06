@@ -30,23 +30,20 @@ pipeline {
         stage('Clean') {
             steps {
                 script {
-                    // Créer le settings.xml temporaire
-                    writeFile file: 'settings.xml', text: '''
-                        <?xml version="1.0" encoding="UTF-8"?>
-                        <settings xmlns="http://maven.apache.org/SETTINGS/1.0.0"
-                                  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-                                  xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0
-                                            https://maven.apache.org/xsd/settings-1.0.0.xsd">
-                            <mirrors>
-                                <mirror>
-                                    <id>central-https</id>
-                                    <name>Maven Central</name>
-                                    <url>https://repo.maven.apache.org/maven2</url>
-                                    <mirrorOf>central</mirrorOf>
-                                </mirror>
-                            </mirrors>
-                        </settings>
-                    '''
+                    writeFile file: 'settings.xml', text: '''<?xml version="1.0" encoding="UTF-8"?>
+<settings xmlns="http://maven.apache.org/SETTINGS/1.0.0"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0
+                            https://maven.apache.org/xsd/settings-1.0.0.xsd">
+    <mirrors>
+        <mirror>
+            <id>central-https</id>
+            <name>Maven Central</name>
+            <url>https://repo.maven.apache.org/maven2</url>
+            <mirrorOf>central</mirrorOf>
+        </mirror>
+    </mirrors>
+</settings>'''
                     sh 'mvn -s settings.xml clean'
                 }
             }
