@@ -9,6 +9,8 @@ pipeline {
     environment {
         MAVEN_OPTS = '-Dhttps.protocols=TLSv1.2'
         SPRING_PROFILES_ACTIVE = 'dev'
+          APP_NAME = 'auth-app'
+        APP_PORT = '8086'
 
     }
     
@@ -77,6 +79,28 @@ pipeline {
             post {
                 success {
                     archiveArtifacts artifacts: '**/target/*.jar', fingerprint: true
+                }
+            }
+        }
+
+        stage('Deploy') {
+            steps {
+                script {
+                    sh '''
+                        echo "Arrêt du conteneur existant s'il existe"
+                        docker stop ${APP_NAME} || true
+                        docker rm ${APP_NAME} || true
+                        
+                        echo "Construction de l'image Docker"
+                        docker build -t ${APP_NAME}:latest .
+                        
+                        echo "Démarrage du nouveau conteneur"
+                        docker run -d \
+                            --name ${APP_NAME} \
+                            -p ${APP_PORT}:8080 \
+                            -e SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE} \
+                            ${APP_NAME}:latest
+                    '''
                 }
             }
         }
