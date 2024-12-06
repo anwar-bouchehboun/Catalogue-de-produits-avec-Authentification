@@ -6,6 +6,10 @@ pipeline {
         maven 'maven'
     }
     
+    environment {
+        MAVEN_OPTS = '-Dhttps.protocols=TLSv1.2 -Dmaven.repo.local=$HOME/.m2/repository -Duser.home=$HOME'
+    }
+    
     stages {
         stage('Vérification des outils') {
             steps {
@@ -19,14 +23,12 @@ pipeline {
         stage('Checkout') {
             steps {
                 script {
-                    // Configuration Git pour gérer les problèmes de connexion
                     sh '''
                         git config --global http.postBuffer 524288000
                         git config --global core.compression 0
                         git config --global http.sslVerify false
                     '''
                     
-                    // Checkout avec retry
                     retry(3) {
                         checkout scm: [$class: 'GitSCM',
                             branches: [[name: '*/master']],
@@ -42,13 +44,27 @@ pipeline {
         
         stage('Clean') {
             steps {
-                sh 'mvn -Dmaven.wagon.http.ssl.insecure=true -Dmaven.wagon.http.ssl.allowall=true clean'
+                sh '''
+                    mvn clean \
+                    -Dmaven.wagon.http.ssl.insecure=true \
+                    -Dmaven.wagon.http.ssl.allowall=true \
+                    -Dmaven.wagon.http.pool=false \
+                    -Dmaven.wagon.httpconnectionManager.ttlSeconds=120 \
+                    -Dmaven.repo.local=$HOME/.m2/repository
+                '''
             }
         }
         
         stage('Tests') {
             steps {
-                sh 'mvn -Dmaven.wagon.http.ssl.insecure=true -Dmaven.wagon.http.ssl.allowall=true test'
+                sh '''
+                    mvn test \
+                    -Dmaven.wagon.http.ssl.insecure=true \
+                    -Dmaven.wagon.http.ssl.allowall=true \
+                    -Dmaven.wagon.http.pool=false \
+                    -Dmaven.wagon.httpconnectionManager.ttlSeconds=120 \
+                    -Dmaven.repo.local=$HOME/.m2/repository
+                '''
             }
             post {
                 always {
@@ -59,7 +75,14 @@ pipeline {
         
         stage('Build') {
             steps {
-                sh 'mvn -Dmaven.wagon.http.ssl.insecure=true -Dmaven.wagon.http.ssl.allowall=true package -DskipTests'
+                sh '''
+                    mvn package -DskipTests \
+                    -Dmaven.wagon.http.ssl.insecure=true \
+                    -Dmaven.wagon.http.ssl.allowall=true \
+                    -Dmaven.wagon.http.pool=false \
+                    -Dmaven.wagon.httpconnectionManager.ttlSeconds=120 \
+                    -Dmaven.repo.local=$HOME/.m2/repository
+                '''
             }
             post {
                 success {
