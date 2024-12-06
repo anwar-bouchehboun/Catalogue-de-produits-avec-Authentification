@@ -2,52 +2,51 @@ pipeline {
     agent any
     
     environment {
-        // Utilisation des identifiants GitHub
         GITHUB_CREDS = credentials('GITHUB_CREDENTIALS')
     }
     
     stages {
+        stage('Vérification des outils') {
+            steps {
+                sh 'which git'
+                sh 'git --version'
+            }
+        }
+        
         stage('Checkout') {
             steps {
-                // Récupération du code
                 git branch: 'master',
                     credentialsId: 'GITHUB_CREDENTIALS',
                     url: 'https://github.com/anwar-bouchehboun/Catalogue-de-produits-avec-Authentification.git'
             }
         }
         
-        stage('Build') {
+        stage('Configuration Git') {
             steps {
-                // Étapes de build
-                sh 'npm install'
-                sh 'npm run build'
+                sh '''
+                    git config --global user.email "anouar.ab95@gmail.com"
+                    git config --global user.name "anwar-bouchehboun"
+                '''
             }
         }
         
-        stage('Test') {
+        stage('Push') {
             steps {
-                // Étapes de test
-                sh 'npm test'
-            }
-        }
-        
-        stage('Deploy') {
-            steps {
-                // Déploiement
-                sh """
-                    git config user.email "votre-email@example.com"
-                    git config user.name "anwar-bouchehboun"
+                sh '''
                     git add .
-                    git commit -m "Deploy: Jenkins build"
-                    git push https://${GITHUB_CREDS_USR}:${GITHUB_CREDS_PSW}@github.com/anwar-bouchehboun/Catalogue-de-produits-avec-Authentification.git
-                """
+                    git commit -m "Update from Jenkins" || echo "No changes to commit"
+                    git push https://${GITHUB_CREDS_USR}:${GITHUB_CREDS_PSW}@github.com/anwar-bouchehboun/Catalogue-de-produits-avec-Authentification.git master
+                '''
             }
         }
     }
     
     post {
+        always {
+            cleanWs()
+        }
         success {
-            echo 'Pipeline exécuté avec succès!'
+            echo 'Pipeline réussi!'
         }
         failure {
             echo 'Pipeline échoué!'
