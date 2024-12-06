@@ -30,7 +30,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @Transactional
 @Slf4j
-public class UserService implements UserDetailsService {
+public class UserService  {
     private final UserRepo userRepo;
     private final UserMapper userMapper = UserMapper.INSTANCE;
     private final PasswordEncoder passwordEncoder;
@@ -86,7 +86,7 @@ public class UserService implements UserDetailsService {
         log.info("Rôles mis à jour pour l'utilisateur {}: {}", userId, roleNames);
     }
 
-    @Override
+  /*  @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         log.debug("Loading user by username: {}", username);
         
@@ -105,7 +105,7 @@ public class UserService implements UserDetailsService {
             user.getPassword(), 
             authorities
         );
-    }
+    }*/
 
     public UserResponse authenticate(String login, String password) {
         log.info("Attempting authentication for user: {}", login);
