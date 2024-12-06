@@ -9,30 +9,54 @@ pipeline {
     stages {
         stage('Vérification des outils') {
             steps {
-                sh '''
-                    java -version
-                    mvn -version
-                '''
+                node {
+                    sh '''
+                        java -version
+                        mvn -version
+                    '''
+                }
             }
         }
         
         stage('Checkout') {
             steps {
-                git branch: 'master',
-                    credentialsId: 'GITHUB_CREDENTIALS',
-                    url: 'https://github.com/anwar-bouchehboun/Catalogue-de-produits-avec-Authentification.git'
+                node {
+                    script {
+                        // Configuration Git pour gérer les problèmes de connexion
+                        sh '''
+                            git config --global http.postBuffer 524288000
+                            git config --global core.compression 0
+                            git config --global http.sslVerify false
+                        '''
+                        
+                        // Checkout avec retry
+                        retry(3) {
+                            checkout scm: [$class: 'GitSCM',
+                                branches: [[name: '*/master']],
+                                userRemoteConfigs: [[
+                                    url: 'https://github.com/anwar-bouchehboun/Catalogue-de-produits-avec-Authentification.git',
+                                    credentialsId: ''
+                                ]]
+                            ]
+                        }
+                    }
+                }
             }
         }
         
         stage('Clean') {
             steps {
-                sh 'mvn -Dmaven.wagon.http.ssl.insecure=true -Dmaven.wagon.http.ssl.allowall=true clean'
+                node {
+                    sh 'mvn -Dmaven.wagon.http.ssl.insecure=true -Dmaven.wagon.http.ssl.allowall=true clean'
+                }
             }
         }
         
         stage('Tests') {
             steps {
-                sh 'mvn -Dmaven.wagon.http.ssl.insecure=true -Dmaven.wagon.http.ssl.allowall=true test'
+                node {
+                    sh 'mvn -Dmaven.wagon.http.ssl.insecure=true -Dmaven.wagon.http.ssl.allowall=true test'
+                }
             }
             post {
                 always {
@@ -43,7 +67,9 @@ pipeline {
         
         stage('Build') {
             steps {
-                sh 'mvn -Dmaven.wagon.http.ssl.insecure=true -Dmaven.wagon.http.ssl.allowall=true package -DskipTests'
+                node {
+                    sh 'mvn -Dmaven.wagon.http.ssl.insecure=true -Dmaven.wagon.http.ssl.allowall=true package -DskipTests'
+                }
             }
             post {
                 success {
