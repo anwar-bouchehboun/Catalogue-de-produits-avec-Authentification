@@ -44,6 +44,14 @@ pipeline {
         </mirror>
     </mirrors>
 </settings>'''
+                    
+                    // Forcer la version du plugin clean
+                    writeFile file: 'pom.xml', text: readFile('pom.xml').replaceAll(
+                        '</properties>',
+                        '''    <maven-clean-plugin.version>3.1.0</maven-clean-plugin.version>
+                        </properties>'''
+                    )
+                    
                     sh 'mvn -s settings.xml clean'
                 }
             }
@@ -51,9 +59,7 @@ pipeline {
         
         stage('Tests') {
             steps {
-                configFileProvider([configFile(fileId: 'maven-settings', variable: 'MAVEN_SETTINGS')]) {
-                    sh 'mvn -s $MAVEN_SETTINGS test'
-                }
+                sh 'mvn -s settings.xml test'
             }
             post {
                 always {
@@ -64,9 +70,7 @@ pipeline {
         
         stage('Build') {
             steps {
-                configFileProvider([configFile(fileId: 'maven-settings', variable: 'MAVEN_SETTINGS')]) {
-                    sh 'mvn -s $MAVEN_SETTINGS package -DskipTests'
-                }
+                sh 'mvn -s settings.xml package -DskipTests'
             }
             post {
                 success {
