@@ -8,6 +8,8 @@ pipeline {
     
     environment {
         MAVEN_OPTS = '-Dhttps.protocols=TLSv1.2'
+        SPRING_PROFILES_ACTIVE = 'dev'
+
     }
     
     stages {
@@ -59,7 +61,7 @@ pipeline {
         
         stage('Tests') {
             steps {
-                sh 'mvn -s settings.xml test'
+                sh 'mvn -s settings.xml test -Dspring.profiles.active=dev'
             }
             post {
                 always {
@@ -70,7 +72,7 @@ pipeline {
         
         stage('Build') {
             steps {
-                sh 'mvn -s settings.xml package -DskipTests'
+                sh 'mvn -s settings.xml package -DskipTests -Dspring.profiles.active=dev'
             }
             post {
                 success {
