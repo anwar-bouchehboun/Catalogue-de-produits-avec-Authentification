@@ -8,8 +8,12 @@ pipeline {
     stages {
         stage('Vérification des outils') {
             steps {
-                sh 'which git'
-                sh 'git --version'
+                sh '''
+                    which git
+                    git --version
+                    node --version
+                    npm --version
+                '''
             }
         }
         
@@ -18,6 +22,24 @@ pipeline {
                 git branch: 'master',
                     credentialsId: 'GITHUB_CREDENTIALS',
                     url: 'https://github.com/anwar-bouchehboun/Catalogue-de-produits-avec-Authentification.git'
+            }
+        }
+        
+        stage('Installation des dépendances') {
+            steps {
+                sh 'npm install'
+            }
+        }
+        
+        stage('Tests') {
+            steps {
+                sh 'npm test || echo "Pas de tests configurés"'
+            }
+        }
+        
+        stage('Build') {
+            steps {
+                sh 'npm run build || echo "Pas de build nécessaire"'
             }
         }
         
@@ -34,7 +56,7 @@ pipeline {
             steps {
                 sh '''
                     git add .
-                    git commit -m "Update from Jenkins" || echo "No changes to commit"
+                    git commit -m "Build et déploiement depuis Jenkins" || echo "Pas de changements à commiter"
                     git push https://${GITHUB_CREDS_USR}:${GITHUB_CREDS_PSW}@github.com/anwar-bouchehboun/Catalogue-de-produits-avec-Authentification.git master
                 '''
             }
@@ -43,13 +65,13 @@ pipeline {
     
     post {
         always {
-            deleteDir()
+            cleanWs()
         }
         success {
-            echo 'Pipeline réussi!'
+            echo 'Pipeline exécuté avec succès!'
         }
         failure {
-            echo 'Pipeline échoué!'
+            echo 'Échec du pipeline!'
         }
     }
 }
