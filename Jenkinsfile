@@ -16,6 +16,15 @@ pipeline {
             }
         }
         
+        stage('Set Permissions') {
+            steps {
+                sh '''
+                    chmod +x mvnw
+                    chmod +x .mvn/wrapper/maven-wrapper.jar
+                '''
+            }
+        }
+        
         stage('Build Maven') {
             steps {
                 sh '''
@@ -36,6 +45,7 @@ pipeline {
         stage('Deploy') {
             steps {
                 sh '''
+                    chmod +x target/*.jar
                     java -jar target/*.jar &
                     echo $! > .pidfile
                 '''
