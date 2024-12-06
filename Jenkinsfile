@@ -3,32 +3,24 @@ pipeline {
     
     environment {
         GITHUB_CREDS = credentials('GITHUB_CREDENTIALS')
+        GIT_SSL_NO_VERIFY = 'true'
     }
     
     stages {
         stage('Checkout') {
             steps {
+                sh 'git config --global http.sslVerify false'
                 git branch: 'master',
                     credentialsId: 'GITHUB_CREDENTIALS',
                     url: 'https://github.com/anwar-bouchehboun/Catalogue-de-produits-avec-Authentification.git'
             }
         }
         
-        stage('Install Dependencies') {
+        stage('Build Maven') {
             steps {
                 sh '''
-                    npm install
-                    composer install
-                '''
-            }
-        }
-        
-        stage('Build') {
-            steps {
-                sh '''
-                    npm run build
-                    php artisan key:generate
-                    php artisan migrate
+                    ./mvnw clean install -DskipTests
+                    ./mvnw package -DskipTests
                 '''
             }
         }
@@ -36,8 +28,7 @@ pipeline {
         stage('Test') {
             steps {
                 sh '''
-                    npm run test
-                    php artisan test
+                    ./mvnw test
                 '''
             }
         }
@@ -45,9 +36,8 @@ pipeline {
         stage('Deploy') {
             steps {
                 sh '''
-                    php artisan config:cache
-                    php artisan route:cache
-                    php artisan view:cache
+                    java -jar target/*.jar &
+                    echo $! > .pidfile
                 '''
             }
         }
@@ -55,6 +45,8 @@ pipeline {
         stage('Push Changes') {
             steps {
                 sh '''
+                    git config --global http.postBuffer 524288000
+                    git config --global core.compression 0
                     git config --global user.email "anouar.ab95@gmail.com"
                     git config --global user.name "anwar-bouchehboun"
                     git add .
@@ -67,19 +59,19 @@ pipeline {
     
     post {
         always {
+            sh '''
+                if [ -f .pidfile ]; then
+                    kill $(cat .pidfile) || true
+                    rm .pidfile
+                fi
+            '''
             deleteDir()
         }
         success {
             echo 'Pipeline terminé avec succès!'
-            sh '''
-                echo "Build #${BUILD_NUMBER} - Success" >> build_history.txt
-            '''
         }
         failure {
             echo 'Pipeline échoué!'
-            sh '''
-                echo "Build #${BUILD_NUMBER} - Failed" >> build_history.txt
-            '''
         }
     }
 }
