@@ -44,12 +44,8 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .passwordEncoder(passwordEncoder())
                 .rolePrefix("ROLE_");
 
+        log.info("Configuration de sécurité en mode développement activée Prod");
 
-      /*  auth.inMemoryAuthentication()
-                .withUser("admin").password(passwordEncoder().encode("123456")).roles("ADMIN")
-                .and()
-                .withUser("user").password(passwordEncoder().encode("123456")).roles("USER");
-                */
 
     }
 
