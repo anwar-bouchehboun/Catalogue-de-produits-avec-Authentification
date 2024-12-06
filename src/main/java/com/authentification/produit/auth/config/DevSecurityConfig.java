@@ -56,7 +56,7 @@ public class DevSecurityConfig extends WebSecurityConfigurerAdapter {
                 .and()
                 .headers().frameOptions().sameOrigin() ;
 
-        log.info("Configuration de sécurité en mode développement activée");
+        log.info("Configuration de sécurité en mode développement activée dev ");
 
     }
 
