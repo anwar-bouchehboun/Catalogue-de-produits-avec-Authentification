@@ -26,13 +26,13 @@ pipeline {
         
         stage('Clean') {
             steps {
-                sh 'mvn clean'
+                sh 'mvn -Dmaven.wagon.http.ssl.insecure=true -Dmaven.wagon.http.ssl.allowall=true clean'
             }
         }
         
         stage('Tests') {
             steps {
-                sh 'mvn test'
+                sh 'mvn -Dmaven.wagon.http.ssl.insecure=true -Dmaven.wagon.http.ssl.allowall=true test'
             }
             post {
                 always {
@@ -43,7 +43,7 @@ pipeline {
         
         stage('Build') {
             steps {
-                sh 'mvn package -DskipTests'
+                sh 'mvn -Dmaven.wagon.http.ssl.insecure=true -Dmaven.wagon.http.ssl.allowall=true package -DskipTests'
             }
             post {
                 success {
