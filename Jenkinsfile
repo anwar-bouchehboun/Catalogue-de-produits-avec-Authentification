@@ -92,6 +92,9 @@ pipeline {
                                       passwordVariable: 'DB_PASSWORD')
                     ]) {
                         sh '''
+                            echo "Création du réseau Docker si nécessaire"
+                            docker network create app-network || true
+                            
                             echo "Arrêt du conteneur existant s'il existe"
                             docker stop ${APP_NAME} || true
                             docker rm ${APP_NAME} || true
@@ -109,6 +112,9 @@ pipeline {
                                 -e SPRING_DATASOURCE_PASSWORD="${DB_PASSWORD}" \\
                                 --network app-network \\
                                 ${APP_NAME}:latest
+                            
+                            echo "Vérification que le conteneur MariaDB est sur le même réseau"
+                            docker network connect app-network mariadb || true
                         '''
                     }
                 }
