@@ -102,19 +102,27 @@ pipeline {
                             echo "Construction de l'image Docker"
                             docker build -t ${APP_NAME}:latest .
                             
+                            echo "Démarrage de MariaDB si nécessaire"
+                            if ! docker ps | grep -q auth_prod_cate-db-1; then
+                                docker-compose up -d db
+                            fi
+                            
                             echo "Démarrage du nouveau conteneur"
                             docker run -d \\
                                 --name ${APP_NAME} \\
                                 -p ${APP_PORT}:8086 \\
                                 -e SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE} \\
-                                -e SPRING_DATASOURCE_URL="jdbc:mariadb://db:3306/${DB_NAME}?createDatabaseIfNotExist=true" \\
+                                -e SPRING_DATASOURCE_URL="jdbc:mariadb://auth_prod_cate-db-1:3306/${DB_NAME}?createDatabaseIfNotExist=true" \\
                                 -e SPRING_DATASOURCE_USERNAME="root" \\
                                 -e SPRING_DATASOURCE_PASSWORD="root" \\
                                 --network auth-app-network \\
                                 ${APP_NAME}:latest
                                 
                             echo "Connexion du conteneur MariaDB au réseau"
-                            docker network connect auth-app-network db || true
+                            docker network connect auth-app-network auth_prod_cate-db-1 || true
+                            
+                            echo "Affichage des conteneurs en cours d'exécution"
+                            docker ps
                             
                             echo "Affichage des réseaux Docker"
                             docker network ls
