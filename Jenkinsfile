@@ -11,7 +11,7 @@ pipeline {
         SPRING_PROFILES_ACTIVE = 'prod'
         APP_NAME = 'auth-app'
         APP_PORT = '8086'
-        DB_HOST = 'localhost'
+        DB_HOST = 'host.docker.internal'
         DB_PORT = '3306'
         DB_NAME = 'catalogue'
         DATABASE_CREDS = credentials('mariadb-credentials')
@@ -69,10 +69,20 @@ pipeline {
                                       passwordVariable: 'DB_PASSWORD')
                     ]) {
                         sh '''
-                            export SPRING_DATASOURCE_URL=jdbc:mariadb://${DB_HOST}:${DB_PORT}/${DB_NAME}
+                            # Vérifier la connectivité à la base de données
+                            echo "Vérification de la connexion à MariaDB..."
+                            nc -zv ${DB_HOST} ${DB_PORT} || true
+                            
+                            # Configuration de la base de données pour les tests
+                            export SPRING_DATASOURCE_URL=jdbc:mariadb://${DB_HOST}:${DB_PORT}/${DB_NAME}?allowPublicKeyRetrieval=true&useSSL=false
                             export SPRING_DATASOURCE_USERNAME=${DB_USER}
                             export SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
-                            mvn -s settings.xml test -Dspring.profiles.active=prod
+                            
+                            # Exécution des tests
+                            mvn -s settings.xml test -Dspring.profiles.active=prod \
+                                -Dspring.datasource.url=${SPRING_DATASOURCE_URL} \
+                                -Dspring.datasource.username=${DB_USER} \
+                                -Dspring.datasource.password=${DB_PASSWORD}
                         '''
                     }
                 }
@@ -105,10 +115,10 @@ pipeline {
                                 --name ${APP_NAME} \
                                 -p ${APP_PORT}:8086 \
                                 -e SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE} \
-                                -e SPRING_DATASOURCE_URL=jdbc:mariadb://${DB_HOST}:${DB_PORT}/${DB_NAME} \
+                                -e SPRING_DATASOURCE_URL=jdbc:mariadb://${DB_HOST}:${DB_PORT}/${DB_NAME}?allowPublicKeyRetrieval=true&useSSL=false \
                                 -e SPRING_DATASOURCE_USERNAME=${DB_USER} \
                                 -e SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD} \
-                                --network host \
+                                --add-host=host.docker.internal:host-gateway \
                                 ${APP_NAME}:latest
                         '''
                     }
