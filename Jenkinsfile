@@ -95,6 +95,18 @@ pipeline {
                             echo "Création du réseau Docker si nécessaire"
                             docker network create app-network || true
                             
+                            echo "Configuration de MariaDB"
+                            docker run -d \\
+                                --name mariadb \\
+                                --network app-network \\
+                                -e MYSQL_ROOT_PASSWORD=root \\
+                                -e MYSQL_DATABASE=${DB_NAME} \\
+                                -p 3306:3306 \\
+                                mariadb:latest || true
+                            
+                            echo "Attente du démarrage de MariaDB"
+                            sleep 15
+                            
                             echo "Arrêt du conteneur existant s'il existe"
                             docker stop ${APP_NAME} || true
                             docker rm ${APP_NAME} || true
@@ -108,13 +120,10 @@ pipeline {
                                 -p ${APP_PORT}:8086 \\
                                 -e SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE} \\
                                 -e SPRING_DATASOURCE_URL="jdbc:mariadb://mariadb:3306/${DB_NAME}?allowPublicKeyRetrieval=true&useSSL=false" \\
-                                -e SPRING_DATASOURCE_USERNAME="${DB_USER}" \\
-                                -e SPRING_DATASOURCE_PASSWORD="${DB_PASSWORD}" \\
+                                -e SPRING_DATASOURCE_USERNAME="root" \\
+                                -e SPRING_DATASOURCE_PASSWORD="root" \\
                                 --network app-network \\
                                 ${APP_NAME}:latest
-                            
-                            echo "Vérification que le conteneur MariaDB est sur le même réseau"
-                            docker network connect app-network mariadb || true
                         '''
                     }
                 }
