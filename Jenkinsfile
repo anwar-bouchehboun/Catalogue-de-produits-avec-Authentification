@@ -92,36 +92,26 @@ pipeline {
                                       passwordVariable: 'DB_PASSWORD')
                     ]) {
                         sh '''
-                            echo "Vérification du réseau Docker"
-                            docker network create auth-app-network || true
-                            
-                            echo "Arrêt du conteneur existant s'il existe"
-                            docker stop ${APP_NAME} || true
-                            docker rm ${APP_NAME} || true
+                            echo "Nettoyage des anciens conteneurs"
+                            docker stop ${APP_NAME} mariadb || true
+                            docker rm ${APP_NAME} mariadb || true
                             
                             echo "Construction de l'image Docker"
                             docker build -t ${APP_NAME}:latest .
                             
-                            echo "Démarrage de MariaDB si nécessaire"
-                            if ! docker ps -a | grep -q mariadb; then
-                                docker run -d \\
-                                    --name mariadb \\
-                                    --network auth-app-network \\
-                                    -e MYSQL_ROOT_PASSWORD=root \\
-                                    -e MYSQL_DATABASE=${DB_NAME} \\
-                                    -p 3306:3306 \\
-                                    mariadb:latest
-                                
-                                echo "Attente du démarrage de MariaDB"
-                                sleep 15
-                            else
-                                echo "Redémarrage de MariaDB"
-                                docker start mariadb || true
-                                sleep 15
-                            fi
+                            echo "Démarrage d'un nouveau conteneur MariaDB"
+                            docker run -d \\
+                                --name mariadb \\
+                                -e MYSQL_ROOT_PASSWORD=root \\
+                                -e MYSQL_DATABASE=${DB_NAME} \\
+                                -p 3306:3306 \\
+                                mariadb:latest
                             
-                            echo "Vérification des logs MariaDB"
-                            docker logs mariadb
+                            echo "Attente du démarrage de MariaDB"
+                            sleep 20
+                            
+                            echo "Vérification du statut de MariaDB"
+                            docker ps | grep mariadb || echo "MariaDB n'est pas en cours d'exécution"
                             
                             echo "Démarrage du nouveau conteneur"
                             docker run -d \\
@@ -131,20 +121,17 @@ pipeline {
                                 -e SPRING_DATASOURCE_URL="jdbc:mariadb://mariadb:3306/${DB_NAME}?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useSSL=false" \\
                                 -e SPRING_DATASOURCE_USERNAME="root" \\
                                 -e SPRING_DATASOURCE_PASSWORD="root" \\
-                                --network auth-app-network \\
+                                --link mariadb:mariadb \\
                                 ${APP_NAME}:latest
                             
                             echo "Attente du démarrage de l'application"
                             sleep 10
                             
                             echo "Vérification des logs de l'application"
-                            docker logs ${APP_NAME}
+                            docker logs ${APP_NAME} || echo "Impossible de récupérer les logs de l'application"
                             
                             echo "Statut des conteneurs"
                             docker ps -a
-                            
-                            echo "Affichage des réseaux Docker"
-                            docker network ls
                         '''
                     }
                 }
