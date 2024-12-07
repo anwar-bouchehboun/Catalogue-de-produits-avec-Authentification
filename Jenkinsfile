@@ -8,10 +8,14 @@ pipeline {
     
     environment {
         MAVEN_OPTS = '-Dhttps.protocols=TLSv1.2'
-        SPRING_PROFILES_ACTIVE = 'dev'
-          APP_NAME = 'auth-app'
+        SPRING_PROFILES_ACTIVE = 'prod'
+        APP_NAME = 'auth-app'
         APP_PORT = '8086'
-
+        DB_HOST = 'localhost'
+        DB_PORT = '3306'
+        DB_NAME = 'catalogue'
+        DB_USER = credentials('DB_USER')
+        DB_PASSWORD = credentials('DB_PASSWORD')
     }
     
     stages {
@@ -33,37 +37,13 @@ pipeline {
         
         stage('Clean') {
             steps {
-                script {
-                    writeFile file: 'settings.xml', text: '''<?xml version="1.0" encoding="UTF-8"?>
-<settings xmlns="http://maven.apache.org/SETTINGS/1.0.0"
-          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-          xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0
-                            https://maven.apache.org/xsd/settings-1.0.0.xsd">
-    <mirrors>
-        <mirror>
-            <id>central-https</id>
-            <name>Maven Central</name>
-            <url>https://repo.maven.apache.org/maven2</url>
-            <mirrorOf>central</mirrorOf>
-        </mirror>
-    </mirrors>
-</settings>'''
-                    
-                    // Forcer la version du plugin clean
-                    writeFile file: 'pom.xml', text: readFile('pom.xml').replaceAll(
-                        '</properties>',
-                        '''    <maven-clean-plugin.version>3.1.0</maven-clean-plugin.version>
-                        </properties>'''
-                    )
-                    
-                    sh 'mvn -s settings.xml clean'
-                }
+                sh 'mvn clean -Dspring.profiles.active=prod'
             }
         }
         
         stage('Tests') {
             steps {
-                sh 'mvn -s settings.xml test -Dspring.profiles.active=dev'
+                sh 'mvn test -Dspring.profiles.active=prod'
             }
             post {
                 always {
@@ -74,7 +54,7 @@ pipeline {
         
         stage('Build') {
             steps {
-                sh 'mvn -s settings.xml package -DskipTests -Dspring.profiles.active=dev'
+                sh 'mvn package -DskipTests -Dspring.profiles.active=prod'
             }
             post {
                 success {
@@ -99,6 +79,10 @@ pipeline {
                             --name ${APP_NAME} \
                             -p ${APP_PORT}:8086 \
                             -e SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE} \
+                            -e SPRING_DATASOURCE_URL=jdbc:mariadb://${DB_HOST}:${DB_PORT}/${DB_NAME} \
+                            -e SPRING_DATASOURCE_USERNAME=${DB_USER} \
+                            -e SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD} \
+                            --network host \
                             ${APP_NAME}:latest
                     '''
                 }
