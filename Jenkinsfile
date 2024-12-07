@@ -100,14 +100,14 @@ pipeline {
                             docker build -t ${APP_NAME}:latest .
                             
                             echo "Démarrage du nouveau conteneur"
-                            docker run -d \
-                                --name ${APP_NAME} \
-                                -p ${APP_PORT}:8086 \
-                                -e SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE} \
-                                -e SPRING_DATASOURCE_URL=jdbc:mariadb://${DB_HOST}:${DB_PORT}/${DB_NAME}?allowPublicKeyRetrieval=true&useSSL=false \
-                                -e SPRING_DATASOURCE_USERNAME=${DB_USER} \
-                                -e SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD} \
-                                --add-host=host.docker.internal:host-gateway \
+                            docker run -d \\
+                                --name ${APP_NAME} \\
+                                -p ${APP_PORT}:8086 \\
+                                -e SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE} \\
+                                -e SPRING_DATASOURCE_URL="jdbc:mariadb://mariadb:3306/${DB_NAME}?allowPublicKeyRetrieval=true&useSSL=false" \\
+                                -e SPRING_DATASOURCE_USERNAME="${DB_USER}" \\
+                                -e SPRING_DATASOURCE_PASSWORD="${DB_PASSWORD}" \\
+                                --network app-network \\
                                 ${APP_NAME}:latest
                         '''
                     }
