@@ -30,8 +30,19 @@ pipeline {
         
         stage('Checkout') {
             steps {
-                git branch: 'master',
-                    url: 'https://github.com/anwar-bouchehboun/Catalogue-de-produits-avec-Authentification.git'
+                checkout([$class: 'GitSCM',
+                    branches: [[name: '*/master']],
+                    extensions: [[$class: 'CloneOption',
+                        depth: 1,
+                        noTags: true,
+                        shallow: true,
+                        timeout: 30
+                    ]],
+                    userRemoteConfigs: [[
+                        url: 'https://github.com/anwar-bouchehboun/Catalogue-de-produits-avec-Authentification.git',
+                        credentialsId: 'git-credentials'
+                    ]]
+                ])
             }
         }
         
