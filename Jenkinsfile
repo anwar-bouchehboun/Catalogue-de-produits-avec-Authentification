@@ -92,21 +92,6 @@ pipeline {
                                       passwordVariable: 'DB_PASSWORD')
                     ]) {
                         sh '''
-                            echo "Création du réseau Docker si nécessaire"
-                            docker network create app-network || true
-                            
-                            echo "Configuration de MariaDB"
-                            docker run -d \\
-                                --name mariadb \\
-                                --network app-network \\
-                                -e MYSQL_ROOT_PASSWORD=root \\
-                                -e MYSQL_DATABASE=${DB_NAME} \\
-                                -p 3308:3306 \\
-                                mariadb:latest || true
-                            
-                            echo "Attente du démarrage de MariaDB"
-                            sleep 15
-                            
                             echo "Arrêt du conteneur existant s'il existe"
                             docker stop ${APP_NAME} || true
                             docker rm ${APP_NAME} || true
@@ -119,10 +104,10 @@ pipeline {
                                 --name ${APP_NAME} \\
                                 -p ${APP_PORT}:8086 \\
                                 -e SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE} \\
-                                -e SPRING_DATASOURCE_URL="jdbc:mariadb://mariadb:3306/${DB_NAME}?allowPublicKeyRetrieval=true&useSSL=false" \\
+                                -e SPRING_DATASOURCE_URL="jdbc:mariadb://db:3306/${DB_NAME}?createDatabaseIfNotExist=true" \\
                                 -e SPRING_DATASOURCE_USERNAME="root" \\
                                 -e SPRING_DATASOURCE_PASSWORD="root" \\
-                                --network app-network \\
+                                --network auth_prod_cate_default \\
                                 ${APP_NAME}:latest
                         '''
                     }
