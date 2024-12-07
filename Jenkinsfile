@@ -93,8 +93,8 @@ pipeline {
                     ]) {
                         sh '''
                             echo "Nettoyage des anciens conteneurs"
-                            docker stop ${APP_NAME} mariadb || true
-                            docker rm ${APP_NAME} mariadb || true
+                            docker stop ${APP_NAME} mariadb phpmyadmin || true
+                            docker rm ${APP_NAME} mariadb phpmyadmin || true
                             
                             echo "Construction de l'image Docker"
                             docker build -t ${APP_NAME}:latest .
@@ -107,11 +107,18 @@ pipeline {
                                 -p 3306:3306 \\
                                 mariadb:latest
                             
+                            echo "Démarrage de phpMyAdmin"
+                            docker run -d \\
+                                --name phpmyadmin \\
+                                -e PMA_HOST=mariadb \\
+                                -e PMA_USER=root \\
+                                -e PMA_PASSWORD=root \\
+                                -p 8080:80 \\
+                                --link mariadb:db \\
+                                phpmyadmin/phpmyadmin
+                            
                             echo "Attente du démarrage de MariaDB"
                             sleep 20
-                            
-                            echo "Vérification du statut de MariaDB"
-                            docker ps | grep mariadb || echo "MariaDB n'est pas en cours d'exécution"
                             
                             echo "Démarrage du nouveau conteneur"
                             docker run -d \\
@@ -125,10 +132,11 @@ pipeline {
                                 ${APP_NAME}:latest
                             
                             echo "Attente du démarrage de l'application"
-                            sleep 10
+                            sleep 20
                             
-                            echo "Vérification des logs de l'application"
-                            docker logs ${APP_NAME} || echo "Impossible de récupérer les logs de l'application"
+                            echo "Accès à phpMyAdmin : http://localhost:8080"
+                            echo "Utilisateur : root"
+                            echo "Mot de passe : root"
                             
                             echo "Statut des conteneurs"
                             docker ps -a
