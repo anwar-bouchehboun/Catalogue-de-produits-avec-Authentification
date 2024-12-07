@@ -15,9 +15,17 @@ pipeline {
         DB_PORT = '3306'
         DB_NAME = 'catalogue'
         DATABASE_CREDS = credentials('mariadb-credentials')
+        MAVEN_HOME = tool 'maven'
+        PATH = "${MAVEN_HOME}/bin:${env.PATH}"
     }
     
     stages {
+        stage('Vérification Maven') {
+            steps {
+                sh 'mvn --version'
+            }
+        }
+        
         stage('Vérification des outils') {
             steps {
                 sh '''
