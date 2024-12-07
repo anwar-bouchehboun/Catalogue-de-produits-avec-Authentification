@@ -92,6 +92,14 @@ pipeline {
                                       passwordVariable: 'DB_PASSWORD')
                     ]) {
                         sh '''
+                            echo "Vérification du réseau Docker"
+                            NETWORK_NAME=$(docker network ls --filter name=auth --format "{{.Name}}" | grep auth)
+                            if [ -z "$NETWORK_NAME" ]; then
+                                echo "Création du réseau Docker"
+                                docker network create auth_prod_cate_default
+                                NETWORK_NAME="auth_prod_cate_default"
+                            fi
+                            
                             echo "Arrêt du conteneur existant s'il existe"
                             docker stop ${APP_NAME} || true
                             docker rm ${APP_NAME} || true
@@ -107,8 +115,11 @@ pipeline {
                                 -e SPRING_DATASOURCE_URL="jdbc:mariadb://db:3306/${DB_NAME}?createDatabaseIfNotExist=true" \\
                                 -e SPRING_DATASOURCE_USERNAME="root" \\
                                 -e SPRING_DATASOURCE_PASSWORD="root" \\
-                                --network auth_prod_cate_default \\
+                                --network ${NETWORK_NAME} \\
                                 ${APP_NAME}:latest
+                            
+                            echo "Affichage des réseaux Docker"
+                            docker network ls
                         '''
                     }
                 }
