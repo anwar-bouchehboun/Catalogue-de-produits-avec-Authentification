@@ -103,7 +103,7 @@ pipeline {
                             docker build -t ${APP_NAME}:latest .
                             
                             echo "Démarrage de MariaDB si nécessaire"
-                            if ! docker ps | grep -q mariadb; then
+                            if ! docker ps -a | grep -q mariadb; then
                                 docker run -d \\
                                     --name mariadb \\
                                     --network auth-app-network \\
@@ -114,21 +114,34 @@ pipeline {
                                 
                                 echo "Attente du démarrage de MariaDB"
                                 sleep 15
+                            else
+                                echo "Redémarrage de MariaDB"
+                                docker start mariadb || true
+                                sleep 15
                             fi
+                            
+                            echo "Vérification des logs MariaDB"
+                            docker logs mariadb
                             
                             echo "Démarrage du nouveau conteneur"
                             docker run -d \\
                                 --name ${APP_NAME} \\
                                 -p ${APP_PORT}:8086 \\
                                 -e SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE} \\
-                                -e SPRING_DATASOURCE_URL="jdbc:mariadb://auth_prod_cate-db-1:3306/${DB_NAME}?createDatabaseIfNotExist=true" \\
+                                -e SPRING_DATASOURCE_URL="jdbc:mariadb://mariadb:3306/${DB_NAME}?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useSSL=false" \\
                                 -e SPRING_DATASOURCE_USERNAME="root" \\
                                 -e SPRING_DATASOURCE_PASSWORD="root" \\
                                 --network auth-app-network \\
                                 ${APP_NAME}:latest
                             
-                            echo "Affichage des conteneurs en cours d'exécution"
-                            docker ps
+                            echo "Attente du démarrage de l'application"
+                            sleep 10
+                            
+                            echo "Vérification des logs de l'application"
+                            docker logs ${APP_NAME}
+                            
+                            echo "Statut des conteneurs"
+                            docker ps -a
                             
                             echo "Affichage des réseaux Docker"
                             docker network ls
