@@ -101,7 +101,7 @@ pipeline {
                                 --network app-network \\
                                 -e MYSQL_ROOT_PASSWORD=root \\
                                 -e MYSQL_DATABASE=${DB_NAME} \\
-                                -p 3306:3306 \\
+                                -p 3308:3306 \\
                                 mariadb:latest || true
                             
                             echo "Attente du démarrage de MariaDB"
