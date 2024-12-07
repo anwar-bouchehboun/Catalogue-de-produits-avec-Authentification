@@ -38,8 +38,7 @@ pipeline {
                         timeout: 30
                     ]],
                     userRemoteConfigs: [[
-                        url: 'https://github.com/anwar-bouchehboun/Catalogue-de-produits-avec-Authentification.git',
-                        credentialsId: 'git-credentials'
+                        url: 'https://github.com/anwar-bouchehboun/Catalogue-de-produits-avec-Authentification.git'
                     ]]
                 ])
             }
@@ -47,13 +46,13 @@ pipeline {
         
         stage('Clean') {
             steps {
-                sh 'mvn clean -Dspring.profiles.active=prod'
+                sh 'mvn -s settings.xml clean -Dspring.profiles.active=prod'
             }
         }
         
         stage('Tests') {
             steps {
-                sh 'mvn test -Dspring.profiles.active=prod'
+                sh 'mvn -s settings.xml test -Dspring.profiles.active=prod'
             }
             post {
                 always {
@@ -64,7 +63,7 @@ pipeline {
         
         stage('Build') {
             steps {
-                sh 'mvn package -DskipTests -Dspring.profiles.active=prod'
+                sh 'mvn -s settings.xml package -DskipTests -Dspring.profiles.active=prod'
             }
             post {
                 success {

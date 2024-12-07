@@ -6,10 +6,11 @@
     
     <mirrors>
         <mirror>
-            <id>central-https</id>
+            <!-- <id>central-https</id> -->
+            <id>central</id>
             <name>Maven Central</name>
             <url>https://repo.maven.apache.org/maven2</url>
-            <mirrorOf>central</mirrorOf>
+            <!-- <mirrorOf>central</mirrorOf> -->
         </mirror>
     </mirrors>
     
