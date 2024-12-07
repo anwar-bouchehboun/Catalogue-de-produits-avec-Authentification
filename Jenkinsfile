@@ -103,8 +103,17 @@ pipeline {
                             docker build -t ${APP_NAME}:latest .
                             
                             echo "Démarrage de MariaDB si nécessaire"
-                            if ! docker ps | grep -q auth_prod_cate-db-1; then
-                                docker-compose up -d db
+                            if ! docker ps | grep -q mariadb; then
+                                docker run -d \\
+                                    --name mariadb \\
+                                    --network auth-app-network \\
+                                    -e MYSQL_ROOT_PASSWORD=root \\
+                                    -e MYSQL_DATABASE=${DB_NAME} \\
+                                    -p 3306:3306 \\
+                                    mariadb:latest
+                                
+                                echo "Attente du démarrage de MariaDB"
+                                sleep 15
                             fi
                             
                             echo "Démarrage du nouveau conteneur"
@@ -117,9 +126,6 @@ pipeline {
                                 -e SPRING_DATASOURCE_PASSWORD="root" \\
                                 --network auth-app-network \\
                                 ${APP_NAME}:latest
-                                
-                            echo "Connexion du conteneur MariaDB au réseau"
-                            docker network connect auth-app-network auth_prod_cate-db-1 || true
                             
                             echo "Affichage des conteneurs en cours d'exécution"
                             docker ps
