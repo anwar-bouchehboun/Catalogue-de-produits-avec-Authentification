@@ -14,8 +14,7 @@ pipeline {
         DB_HOST = 'localhost'
         DB_PORT = '3306'
         DB_NAME = 'catalogue'
-        DB_USER = credentials('DB_USER')
-        DB_PASSWORD = credentials('DB_PASSWORD')
+        DATABASE_CREDS = credentials('mariadb-credentials')
     }
     
     stages {
@@ -77,25 +76,31 @@ pipeline {
         stage('Deploy') {
             steps {
                 script {
-                    sh '''
-                        echo "Arrêt du conteneur existant s'il existe"
-                        docker stop ${APP_NAME} || true
-                        docker rm ${APP_NAME} || true
-                        
-                        echo "Construction de l'image Docker"
-                        docker build -t ${APP_NAME}:latest .
-                        
-                        echo "Démarrage du nouveau conteneur"
-                        docker run -d \
-                            --name ${APP_NAME} \
-                            -p ${APP_PORT}:8086 \
-                            -e SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE} \
-                            -e SPRING_DATASOURCE_URL=jdbc:mariadb://${DB_HOST}:${DB_PORT}/${DB_NAME} \
-                            -e SPRING_DATASOURCE_USERNAME=${DB_USER} \
-                            -e SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD} \
-                            --network host \
-                            ${APP_NAME}:latest
-                    '''
+                    withCredentials([
+                        usernamePassword(credentialsId: 'mariadb-credentials', 
+                                      usernameVariable: 'DB_USER', 
+                                      passwordVariable: 'DB_PASSWORD')
+                    ]) {
+                        sh '''
+                            echo "Arrêt du conteneur existant s'il existe"
+                            docker stop ${APP_NAME} || true
+                            docker rm ${APP_NAME} || true
+                            
+                            echo "Construction de l'image Docker"
+                            docker build -t ${APP_NAME}:latest .
+                            
+                            echo "Démarrage du nouveau conteneur"
+                            docker run -d \
+                                --name ${APP_NAME} \
+                                -p ${APP_PORT}:8086 \
+                                -e SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE} \
+                                -e SPRING_DATASOURCE_URL=jdbc:mariadb://${DB_HOST}:${DB_PORT}/${DB_NAME} \
+                                -e SPRING_DATASOURCE_USERNAME=${DB_USER} \
+                                -e SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD} \
+                                --network host \
+                                ${APP_NAME}:latest
+                        '''
+                    }
                 }
             }
         }
