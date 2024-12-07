@@ -63,28 +63,13 @@ pipeline {
         stage('Tests') {
             steps {
                 script {
-                    withCredentials([
-                        usernamePassword(credentialsId: 'mariadb-credentials', 
-                                      usernameVariable: 'DB_USER', 
-                                      passwordVariable: 'DB_PASSWORD')
-                    ]) {
-                        sh '''
-                            # Vérifier la connectivité à la base de données
-                            echo "Vérification de la connexion à MariaDB..."
-                            nc -zv ${DB_HOST} ${DB_PORT} || true
-                            
-                            # Configuration de la base de données pour les tests
-                            export SPRING_DATASOURCE_URL=jdbc:mariadb://${DB_HOST}:${DB_PORT}/${DB_NAME}?allowPublicKeyRetrieval=true&useSSL=false
-                            export SPRING_DATASOURCE_USERNAME=${DB_USER}
-                            export SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
-                            
-                            # Exécution des tests
-                            mvn -s settings.xml test -Dspring.profiles.active=prod \
-                                -Dspring.datasource.url=${SPRING_DATASOURCE_URL} \
-                                -Dspring.datasource.username=${DB_USER} \
-                                -Dspring.datasource.password=${DB_PASSWORD}
-                        '''
-                    }
+                    sh '''
+                        # Exécution des tests avec le profil test
+                        mvn -s settings.xml test -Dspring.profiles.active=test \
+                            -Dspring.datasource.url=jdbc:mariadb://localhost:3306/catalogue \
+                            -Dspring.datasource.username=root \
+                            -Dspring.datasource.password=root
+                    '''
                 }
             }
             post {
