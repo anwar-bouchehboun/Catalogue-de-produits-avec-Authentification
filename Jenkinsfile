@@ -64,11 +64,15 @@ pipeline {
             steps {
                 script {
                     sh '''
+                        # Vérification de la connectivité à MariaDB
+                        nc -zv host.docker.internal 3306 || true
+                        
                         # Exécution des tests avec le profil test
                         mvn -s settings.xml test -Dspring.profiles.active=test \
-                            -Dspring.datasource.url=jdbc:mariadb://localhost:3306/catalogue \
+                            -Dspring.datasource.url=jdbc:mariadb://host.docker.internal:3306/catalogue \
                             -Dspring.datasource.username=root \
-                            -Dspring.datasource.password=root
+                            -Dspring.datasource.password=root \
+                            -Dspring.datasource.driver-class-name=org.mariadb.jdbc.Driver
                     '''
                 }
             }
