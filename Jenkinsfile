@@ -26,15 +26,6 @@ pipeline {
             }
         }
         
-        stage('Vérification des outils') {
-            steps {
-                sh '''
-                    java -version
-                    mvn -version
-                '''
-            }
-        }
-        
         stage('Checkout') {
             steps {
                 checkout([$class: 'GitSCM',
@@ -58,17 +49,6 @@ pipeline {
             }
         }
         
-        stage('Tests') {
-            steps {
-                sh 'mvn -s settings.xml test -Dspring.profiles.active=prod'
-            }
-            post {
-                always {
-                    junit '**/target/surefire-reports/*.xml'
-                }
-            }
-        }
-        
         stage('Build') {
             steps {
                 sh 'mvn -s settings.xml package -DskipTests -Dspring.profiles.active=prod'
@@ -76,6 +56,30 @@ pipeline {
             post {
                 success {
                     archiveArtifacts artifacts: '**/target/*.jar', fingerprint: true
+                }
+            }
+        }
+
+        stage('Tests') {
+            steps {
+                script {
+                    withCredentials([
+                        usernamePassword(credentialsId: 'mariadb-credentials', 
+                                      usernameVariable: 'DB_USER', 
+                                      passwordVariable: 'DB_PASSWORD')
+                    ]) {
+                        sh '''
+                            export SPRING_DATASOURCE_URL=jdbc:mariadb://${DB_HOST}:${DB_PORT}/${DB_NAME}
+                            export SPRING_DATASOURCE_USERNAME=${DB_USER}
+                            export SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
+                            mvn -s settings.xml test -Dspring.profiles.active=prod
+                        '''
+                    }
+                }
+            }
+            post {
+                always {
+                    junit '**/target/surefire-reports/*.xml'
                 }
             }
         }
